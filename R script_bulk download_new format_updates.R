@@ -48,7 +48,7 @@ csv_names <- c(
 #Format them as if R did it automatically
 csv_names <- make.names(csv_names)
 
-data <- read_excel("Syria 2014_full download.xls",sheet="Results - Incoming",skip=3,col_names=csv_names)
+data <- read_excel("Somalia 2015_full download.xls",sheet="Results - Incoming",skip=3,col_names=csv_names)
 
 library(plyr)
 
@@ -67,8 +67,6 @@ data <- subset(data,!grepl("total",Donor,ignore.case=TRUE))
 # Remove government of
 data$Donor <- gsub(", Government of","",data$Donor)
 unique(data$Donor)
-data$Recipient.Organization <- gsub(", Government of","",data$Recipient.Organization)
-unique(data$Recipient.Organization)
 
 #Merge to create new column "Code name" based on donor type
 codenames <- read.csv("codename.csv",na.strings="",as.is=TRUE)
@@ -156,7 +154,7 @@ View(data[c("Flow.status","Amount..USD.","millionsContributed","millionsCommitte
 data <- transform(data,domesticresponse=Donor==Destination.Country)
 
 
-deflator <- read.csv("deflatorstrial2014_AS.csv",na.strings="",as.is=TRUE)
+deflator <- read.csv("deflatorstrial2000.csv",na.strings="",as.is=TRUE)
 deflator <- deflator[!duplicated(deflator$Donor),]
 
 data <- join(data,deflator,by="Donor",type='left', match='all')
