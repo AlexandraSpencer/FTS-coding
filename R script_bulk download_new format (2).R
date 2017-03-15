@@ -1,5 +1,5 @@
-# install.packages("plyr")
-# install.packages("readxl")
+install.packages("plyr")
+install.packages("readxl")
 library(readxl)
 
 wd <- "C:/R folder/GHA Report"
@@ -73,8 +73,10 @@ unique(data$Recipient.Organization)
 #Merge to create new column "Code name" based on donor type
 codenames <- read.csv("codename.csv",na.strings="",as.is=TRUE)
 codenames <- codenames[!duplicated(codenames$Donor),]
-data <- join(data, codenames, by='Donor', type='left', match='all')
-
+codenames$lower.Donor <- tolower(codenames$Donor)
+codenames$Donor <- NULL
+data$lower.Donor <- tolower(data$Donor)
+data <- join(data, codenames, by='lower.Donor', type='left', match='all')
 
 withoutCodename <- subset(data,is.na(codename))
 unique(withoutCodename$Donor)
@@ -129,53 +131,26 @@ unique(withoutchannels$Recipient.Organization)
 # data <- transform(data,millionsContributed=USD.committed.contributed/1000000)
 # data <- transform(data,millionsPledged=USD.pledged/1000000)
 
-# Set up new blank vars
-data$USD.contributed <- NA
-data$USD.committed <- NA
-data$USD.pledged <- NA
-
-# Replace with data given conditionals
-data$USD.contributed[which(data$Flow.status=="Paid Contribution")] <- data$Amount..USD.[which(data$Flow.status=="Paid Contribution")]
-data$millionsContributed <- data$USD.contributed/1000000
-data$USD.committed[which(data$Flow.status=="Commitment")] <- data$Amount..USD.[which(data$Flow.status=="Commitment")]
-data$millionsCommitted <- data$USD.committed/1000000
-data$USD.pledged[which(data$Flow.status=="Pledge")] <- data$Amount..USD.[which(data$Flow.status=="Pledge")]
-data$millionsPledged <- data$USD.pledged/1000000
-
-#Need a new function to do sums by row...
-psum <- function(...,na.rm=FALSE) { 
-  rowSums(do.call(cbind,list(...)),na.rm=na.rm) } 
-
-data$USD.committed.contributed <- psum(data$USD.committed,data$USD.contributed,na.rm=TRUE)
-data$millionsComCon <- data$USD.committed.contributed/1000000
-
-#Make sure it worked okay
-View(data[c("Flow.status","Amount..USD.","millionsContributed","millionsCommitted","millionsPledged","millionsComCon")])
 
 #Create new column "Domestic" 
 data <- transform(data,domesticresponse=Donor==Destination.Country)
 
 
-deflator <- read.csv("deflatorstrial2014_AS.csv",na.strings="",as.is=TRUE)
+deflator <- read.csv("deflatorstrial2015.csv",na.strings="",as.is=TRUE)
 deflator <- deflator[!duplicated(deflator$Donor),]
 
 data <- join(data,deflator,by="Donor",type='left', match='all')
-data <- transform(data,contributedDeflated=USD.committed.contributed/Deflatorvalue)
-data <- transform(data,pledgedDeflated=USD.pledged/Deflatorvalue)
-
+data <- transform(data,amountDeflated=Amount..USD./Deflatorvalue)
+data <- transform(data,amountDeflatedMillions=amountDeflated/1000000)
 
 withoutdeflators <- subset(data,is.na(Deflatorvalue))
 unique(withoutdeflators$Donor)
-
 
 #Remove Deflatorvalue column
 data$Deflatorvalue <- NULL
 
 #No longer have an X
 # data$X <- NULL
-
-data <- transform(data,millionsContributeddeflated=contributedDeflated/1000000)
-data <- transform(data,millionsPledgeddeflated=pledgedDeflated/1000000)
 
 #Merge to create new column "Income group" based on destination country
 incomegroups <- read.csv("incomegroups.csv",na.strings="",as.is=TRUE)
@@ -188,7 +163,8 @@ unique(withoutincome$Destination.Country)
 
 write.csv(data,"fts_transformed.csv",na="",row.names=FALSE)
 
-# install.packages("data.table")
+install.packages("data.table")
 library(data.table)
-dat.tab <- data.table(data)[,.(millionsContributed=sum(millionsContributed,na.rm=TRUE),millionsCommitted=sum(millionsCommitted,na.rm=TRUE)),by=.(Recipient.Organization)]
+donor.tab <- data.table(data)[,.(amountDeflatedMillions=sum(amountDeflatedMillions,na.rm=TRUE)),by=.(Donor,Flow.status)]
+write.csv(donor.tab,"donor_flow_status.csv", na="",row.names=FALSE)
 
