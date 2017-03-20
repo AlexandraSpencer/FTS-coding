@@ -1,5 +1,5 @@
-#install.packages("plyr")
-#install.packages("readxl")
+install.packages("plyr")
+install.packages("readxl")
 library(readxl)
 
 wd <- "C:/R folder/GHA Report"
@@ -48,7 +48,7 @@ csv_names <- c(
 #Format them as if R did it automatically
 csv_names <- make.names(csv_names)
 
-data <- read_excel("All countries_2016.xls",sheet="Results - Incoming",skip=3,col_names=csv_names)
+data <- read_excel("All 2016 flows.xls",sheet="Results - Incoming",skip=3,col_names=csv_names)
 
 library(plyr)
 
@@ -135,6 +135,7 @@ unique(withoutngos$Recipient.Organization)
 deliverychannels <- read.csv("deliverychannels.csv",na.strings="",as.is=TRUE)
 deliverychannels <- deliverychannels[!duplicated(deliverychannels$Recipient.Organization),]
 deliverychannels$lower.Recipient.Organization <- tolower(deliverychannels$Recipient.Organization)
+deliverychannels$Recipient.Organization <- NULL
 data$lower.Recipient.Organization <- tolower(data$Recipient.Organization)
 data <- join(data, deliverychannels, by='lower.Recipient.Organization', type='left', match='all')
 
@@ -149,6 +150,7 @@ unique(withoutchannels$Recipient.Organization)
 incomegroups <- read.csv("incomegroups.csv",na.strings="",as.is=TRUE)
 incomegroups <- incomegroups[!duplicated(incomegroups$Destination.Country),]
 incomegroups$lower.Destination.Country <- tolower(incomegroups$Destination.Country)
+incomegroups$Destination.Country <- NULL 
 data$lower.Destination.Country <- tolower(data$Destination.Country)
 data <- join(data, incomegroups, by='lower.Destination.Country', type='left', match='all')
 
@@ -179,7 +181,7 @@ data$Deflatorvalue <- NULL
 
 write.csv(data,"fts_transformed.csv",na="",row.names=FALSE)
 
-#install.packages("data.table")
+install.packages("data.table")
 library(data.table)
 donor.tab <- data.table(data)[,.(amountDeflatedMillions=sum(amountDeflatedMillions,na.rm=TRUE)),by=.(Donor,Flow.status)]
 write.csv(donor.tab,"donor_flow_status.csv", na="",row.names=FALSE)
