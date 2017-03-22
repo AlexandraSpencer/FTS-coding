@@ -1,8 +1,9 @@
-install.packages("plyr")
-install.packages("readxl")
+# install.packages("plyr")
+# install.packages("readxl")
 library(readxl)
+library(plyr)
 
-wd <- "C:/R folder/GHA Report"
+wd <- "C:/git/FTs-coding"
 setwd(wd)
 
 #Define renamed vars
@@ -50,16 +51,6 @@ csv_names <- make.names(csv_names)
 
 data <- read_excel("All 2016 flows.xls",sheet="Results - Incoming",skip=3,col_names=csv_names)
 
-library(plyr)
-
-#Parse numbers (removing commas)
-#Commas aren't in numbers anymore, so these aren't necessary
-# data <- transform(data,USD.committed.contributed=as.numeric(gsub(",","", USD.committed.contributed)))
-# data <- transform(data,Original.currency.amount=as.numeric(gsub(",","", Original.currency.amount)))
-# data <- transform(data,USD.pledged=as.numeric(gsub(",","", USD.pledged)))
-# data <- transform(data,Project.current.request=as.numeric(gsub(",","", Project.current.request)))
-# data <- transform(data,Item.ID=as.numeric(gsub(",","", Item.ID)))
-
 #Remove total row
 #Note sure "Total: " still applies, I'll remove the comma and make it case insensitive to pick it up in case
 data <- subset(data,!grepl("total",Donor,ignore.case=TRUE))
@@ -72,8 +63,8 @@ unique(data$Recipient.Organization)
 
 #Merge to create new column "Code name" based on donor type
 codenames <- read.csv("codename.csv",na.strings="",as.is=TRUE)
-codenames <- codenames[!duplicated(codenames$Donor),]
 codenames$lower.Donor <- tolower(codenames$Donor)
+codenames <- codenames[!duplicated(codenames$lower.Donor),]
 codenames$Donor <- NULL
 data$lower.Donor <- tolower(data$Donor)
 data <- join(data, codenames, by='lower.Donor', type='left', match='all')
@@ -86,8 +77,8 @@ unique(withoutCodename$Donor)
 #Merge to create new column "Private money" based on donor type
 #I don't have these csvs, but I'll double check the new var names match up
 privatemoney <- read.csv("privatemoney.csv",na.strings="",as.is=TRUE)
-privatemoney <- privatemoney[!duplicated(privatemoney$Donor),]
 privatemoney$lower.Donor <- tolower(privatemoney$Donor)
+privatemoney <- privatemoney[!duplicated(privatemoney$lower.Donor),]
 privatemoney$Donor <- NULL
 data$lower.Donor <- tolower(data$Donor)
 data <- join(data, privatemoney, by='lower.Donor', type='left', match='all')
@@ -98,8 +89,8 @@ unique(withoutPrivate$Donor)
 
 #Merge to create new column "Donor DAC region" based on donor type
 donordacregion <- read.csv("dacregions.csv",na.strings="",as.is=TRUE)
-donordacregion <- donordacregion[!duplicated(donordacregion$Donor),]
 donordacregion$lower.Donor <- tolower(donordacregion$Donor)
+donordacregion <- donordacregion[!duplicated(donordacregion$lower.Donor),]
 donordacregion$Donor <- NULL
 data$lower.Donor <- tolower(data$Donor) 
 data <- join(data, donordacregion, by='lower.Donor', type='left', match='all')
@@ -110,8 +101,8 @@ unique(withoutDACRegion$Donor)
 
 #Merge to create new column "Appealing agency code name" based on recipient type
 recipientcodename <- read.csv("recipientcodename.csv",na.strings="",as.is=TRUE)
-recipientcodename <- recipientcodename[!duplicated(recipientcodename$Recipient.Organization),]
 recipientcodename$lower.Recipient.Organization <- tolower(recipientcodename$Recipient.Organization)
+recipientcodename <- recipientcodename[!duplicated(recipientcodename$lower.Recipient.Organization),]
 recipientcodename$Recipient.Organization <- NULL 
 data$lower.Recipient.Organization <- tolower(data$Recipient.Organization)
 data <- join(data, recipientcodename, by='lower.Recipient.Organization', type='left', match='all')
@@ -122,8 +113,8 @@ unique(withoutRecipientcode$Recipient.Organization)
 
 #Merge to create new column "Recip Org NGO type" based on recipient type
 ngotype <- read.csv("ngotype.csv",na.strings="",as.is=TRUE)
-ngotype <- ngotype[!duplicated(ngotype$Recipient.Organization),]
 ngotype$lower.Recipient.Organization <- tolower(ngotype$Recipient.Organization)
+ngotype <- ngotype[!duplicated(ngotype$lower.Recipient.Organization),]
 ngotype$Recipient.Organization <- NULL
 data$lower.Recipient.Organization <- tolower(data$Recipient.Organization)
 data <- join(data, ngotype, by='lower.Recipient.Organization', type='left', match='all')
@@ -133,8 +124,8 @@ unique(withoutngos$Recipient.Organization)
 
 #Merge to create new column "Channels of delivery" based on recipient type
 deliverychannels <- read.csv("deliverychannels.csv",na.strings="",as.is=TRUE)
-deliverychannels <- deliverychannels[!duplicated(deliverychannels$Recipient.Organization),]
 deliverychannels$lower.Recipient.Organization <- tolower(deliverychannels$Recipient.Organization)
+deliverychannels <- deliverychannels[!duplicated(deliverychannels$lower.Recipient.Organization),]
 deliverychannels$Recipient.Organization <- NULL
 data$lower.Recipient.Organization <- tolower(data$Recipient.Organization)
 data <- join(data, deliverychannels, by='lower.Recipient.Organization', type='left', match='all')
@@ -142,14 +133,10 @@ data <- join(data, deliverychannels, by='lower.Recipient.Organization', type='le
 withoutchannels <- subset(data,is.na(deliverychannels))
 unique(withoutchannels$Recipient.Organization)
 
-#These are now in the same column. And it's just "Amount..USD." so we'll need to adjust
-# data <- transform(data,millionsContributed=USD.committed.contributed/1000000)
-# data <- transform(data,millionsPledged=USD.pledged/1000000)
-
 #Merge to create new column "Income group" based on destination country
 incomegroups <- read.csv("incomegroups.csv",na.strings="",as.is=TRUE)
-incomegroups <- incomegroups[!duplicated(incomegroups$Destination.Country),]
 incomegroups$lower.Destination.Country <- tolower(incomegroups$Destination.Country)
+incomegroups <- incomegroups[!duplicated(incomegroups$lower.Destination.Country),]
 incomegroups$Destination.Country <- NULL 
 data$lower.Destination.Country <- tolower(data$Destination.Country)
 data <- join(data, incomegroups, by='lower.Destination.Country', type='left', match='all')
@@ -176,8 +163,6 @@ data$Deflatorvalue <- NULL
 
 #No longer have an X
 # data$X <- NULL
-
-
 
 write.csv(data,"fts_transformed.csv",na="",row.names=FALSE)
 
