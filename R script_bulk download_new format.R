@@ -1,5 +1,5 @@
-# install.packages("plyr")
-# install.packages("readxl")
+install.packages("plyr")
+install.packages("readxl")
 library(readxl)
 library(plyr)
 
@@ -133,22 +133,11 @@ data <- join(data, deliverychannels, by='lower.Recipient.Organization', type='le
 withoutchannels <- subset(data,is.na(deliverychannels))
 unique(withoutchannels$Recipient.Organization)
 
-#Merge to create new column "Income group" based on destination country
-incomegroups <- read.csv("incomegroups.csv",na.strings="",as.is=TRUE)
-incomegroups$lower.Destination.Country <- tolower(incomegroups$Destination.Country)
-incomegroups <- incomegroups[!duplicated(incomegroups$lower.Destination.Country),]
-incomegroups$Destination.Country <- NULL 
-data$lower.Destination.Country <- tolower(data$Destination.Country)
-data <- join(data, incomegroups, by='lower.Destination.Country', type='left', match='all')
-
-withoutincome <- subset(data,is.na(incomegroups))
-unique(withoutincome$Destination.Country)
-
 #Create new column "Domestic" 
 data <- transform(data,domesticresponse=Donor==Destination.Country)
 
 
-deflator <- read.csv("deflatorstrial2016.csv",na.strings="",as.is=TRUE)
+deflator <- read.csv("deflators2016.csv",na.strings="",as.is=TRUE)
 deflator <- deflator[!duplicated(deflator$Donor),]
 
 data <- join(data,deflator,by="Donor",type='left', match='all')
